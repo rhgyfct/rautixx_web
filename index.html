@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAUTIXX — Digital Intelligence Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00fff0;
+  --purple: #b400ff;
+  --pink: #ff006e;
+  --bg: #020408;
+  --bg2: #050d15;
+  --glass: rgba(0,255,240,0.04);
+  --glass2: rgba(180,0,255,0.06);
+  --border: rgba(0,255,240,0.15);
+  --border2: rgba(180,0,255,0.2);
+  --text: #c8e6f0;
+  --dim: #4a6a7a;
+  --glow-c: 0 0 20px rgba(0,255,240,0.4), 0 0 60px rgba(0,255,240,0.1);
+  --glow-p: 0 0 20px rgba(180,0,255,0.4), 0 0 60px rgba(180,0,255,0.1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ═══════════ CUSTOM CURSOR ═══════════ */
+#cursor-dot {
+  width: 8px; height: 8px;
+  background: var(--cyan);
+  border-radius: 50%;
+  position: fixed; top:0; left:0;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: transform 0.05s;
+  box-shadow: var(--glow-c);
+}
+#cursor-ring {
+  width: 36px; height: 36px;
+  border: 1px solid rgba(0,255,240,0.5);
+  border-radius: 50%;
+  position: fixed; top:0; left:0;
+  pointer-events: none; z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: transform 0.15s ease, width 0.2s, height 0.2s, border-color 0.2s;
+}
+body:hover #cursor-ring { border-color: rgba(0,255,240,0.5); }
+a:hover ~ #cursor-ring, button:hover ~ #cursor-ring { width:50px; height:50px; }
+
+/* ═══════════ CANVAS BG ═══════════ */
+#bg-canvas {
+  position: fixed; top:0; left:0;
+  width:100%; height:100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* ═══════════ LOADING SCREEN ═══════════ */
+#loader {
+  position: fixed; inset:0;
+  background: var(--bg);
+  z-index: 1000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px;
+}
+
+.loader-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  letter-spacing: 0.3em;
+  animation: flicker 0.1s infinite alternate;
+}
+
+@keyframes flicker {
+  0% { opacity: 1; }
+  100% { opacity: 0.95; }
+}
+
+.loader-terminal {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--cyan);
+  text-align: left;
+  width: 340px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+}
+
+.loader-line {
+  display: block;
+  margin: 4px 0;
+  opacity: 0;
+  animation: fadeLine 0.3s forwards;
+}
+
+.loader-line.ok { color: #00ff88; }
+.loader-line.warn { color: #ffcc00; }
+.loader-line.title { color: var(--purple); font-size: 1.1rem; }
+
+@keyframes fadeLine { to { opacity: 1; } }
+
+.loader-bar-wrap {
+  width: 340px;
+  height: 3px;
+  background: rgba(0,255,240,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  border-radius: 2px;
+  animation: loadBar 2.8s ease forwards;
+  box-shadow: 0 0 15px var(--cyan);
+}
+@keyframes loadBar { to { width: 100%; } }
+
+/* ═══════════ NAV ═══════════ */
+nav {
+  position: fixed; top:0; left:0; right:0;
+  z-index: 500;
+  padding: 16px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(180deg, rgba(2,4,8,0.95) 0%, transparent 100%);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0,255,240,0.06);
+}
+
+.nav-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  letter-spacing: 0.2em;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex; gap: 32px; list-style: none;
+}
+
+.nav-links a {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: color 0.3s, text-shadow 0.3s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute; bottom: -4px; left:0; right:0;
+  height: 1px;
+  background: var(--cyan);
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+.nav-links a:hover { color: var(--cyan); text-shadow: var(--glow-c); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.nav-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: #00ff88;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-clock {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.82rem;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  border: 1px solid rgba(0,255,240,0.25);
+  background: linear-gradient(145deg, rgba(0,255,240,0.1), rgba(0,255,240,0.03));
+  border-radius: 3px;
+  padding: 7px 11px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 14px rgba(0,255,240,0.3), 0 0 26px rgba(0,255,240,0.08);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.09em;
+  position: relative;
+}
+.nav-clock .clock-label {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.nav-clock #clock-text {
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 7px rgba(0,255,240,0.6), 0 0 22px rgba(0,255,240,0.3);
+  animation: neon-flicker 1.2s infinite alternate;
+}
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; filter: brightness(1.08); }
+  50% { opacity: 0.87; filter: brightness(1.02); }
+}
+.nav-clock::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  top: 0; left: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.12) 100%);
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+  animation: scanline 4.2s infinite;
+}
+@keyframes scanline {
+  0% { opacity: 0; transform: translateX(-100%) skewX(-15deg); }
+  40% { opacity: 0.25; }
+  50% { opacity: 0.65; transform: translateX(100%) skewX(-15deg); }
+  100% { opacity: 0; transform: translateX(120%) skewX(-15deg); }
+}
+.nav-clock.pulse { transform: scale(1.02); box-shadow: 0 0 22px rgba(0,255,240,0.42), 0 0 36px rgba(0,255,240,0.18); }
+.status-dot {
+  width: 7px; height: 7px;
+  background: #00ff88;
+  border-radius: 50%;
+  animation: pulse-green 2s infinite;
+  box-shadow: 0 0 10px #00ff88;
+}
+@keyframes pulse-green {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(0.8); }
+}
+
+/* ═══════════ SECTIONS ═══════════ */
+section {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  padding: 100px 40px 60px;
+}
+
+/* ═══════════ HOME ═══════════ */
+#home {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  gap: 24px;
+  padding-top: 120px;
+}
+
+.home-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--cyan);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  padding: 6px 18px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  animation: fadeUp 0.6s 0.2s both;
+}
+
+.home-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(3rem, 9vw, 8rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  animation: fadeUp 0.6s 0.4s both;
+}
+
+.home-title span.c { color: var(--cyan); text-shadow: var(--glow-c); }
+.home-title span.p { color: var(--purple); text-shadow: var(--glow-p); }
+
+.home-tagline {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(0.8rem, 2vw, 1.1rem);
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  max-width: 600px;
+  animation: fadeUp 0.6s 0.6s both;
+}
+
+.typewriter-line {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--cyan);
+  min-height: 2em;
+  animation: fadeUp 0.6s 0.8s both;
+}
+.typewriter-line .cursor { animation: blink 0.8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.home-ctas {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+  animation: fadeUp 0.6s 1s both;
+}
+
+.btn-primary {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  color: var(--bg);
+  border: none; border-radius: 2px;
+  cursor: none;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-block;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,255,240,0.3);
+}
+
+.btn-ghost {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--cyan);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: none;
+  text-decoration: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  display: inline-block;
+}
+.btn-ghost:hover {
+  background: var(--glass);
+  box-shadow: var(--glow-c);
+  transform: translateY(-2px);
+}
+
+.home-stats {
+  display: flex; gap: 48px; flex-wrap: wrap; justify-content: center;
+  margin-top: 20px;
+  animation: fadeUp 0.6s 1.2s both;
+}
+.stat {
+  text-align: center;
+}
+.stat-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  display: block;
+}
+.stat-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+}
+
+/* Scroll indicator */
+.scroll-hint {
+  position: absolute; bottom: 30px; left:50%; transform:translateX(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  letter-spacing: 0.3em;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: fadeUp 1s 1.5s both;
+}
+.scroll-arrow {
+  width: 1px; height: 40px;
+  background: linear-gradient(180deg, var(--cyan), transparent);
+  animation: scrollDown 1.5s infinite;
+}
+@keyframes scrollDown {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(30px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+/* ═══════════ SECTION HEADERS ═══════════ */
+.section-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.section-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--purple);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+.section-title span { color: var(--cyan); text-shadow: var(--glow-c); }
+.section-line {
+  width: 80px; height: 2px;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  margin: 16px auto 0;
+  box-shadow: 0 0 15px var(--cyan);
+}
+
+/* ═══════════ ABOUT ═══════════ */
+#about {
+  background: linear-gradient(180deg, transparent, rgba(180,0,255,0.03), transparent);
+}
+
+.about-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.about-mission {
+  padding: 32px;
+  background: var(--glass2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+.about-mission::before {
+  content: '';
+  position: absolute; top:0; left:0;
+  width:3px; height:100%;
+  background: linear-gradient(180deg, var(--purple), var(--cyan));
+}
+
+.about-mission h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  color: var(--purple);
+  margin-bottom: 16px;
+  letter-spacing: 0.1em;
+}
+.about-mission p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text);
+  font-weight: 300;
+}
+
+.timeline {
+  display: flex; flex-direction: column; gap: 24px;
+}
+.timeline-item {
+  display: flex; gap: 20px; align-items: flex-start;
+  opacity: 0; transform: translateX(20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.timeline-item.visible { opacity:1; transform: translateX(0); }
+.timeline-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: var(--glow-c);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.timeline-year {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--cyan);
+  min-width: 60px;
+}
+.timeline-text h4 {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.timeline-text p {
+  font-size: 0.9rem;
+  color: var(--dim);
+}
+
+.skills-grid {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.skill-bar {
+  padding: 14px 18px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.skill-bar:hover { border-color: var(--cyan); box-shadow: var(--glow-c); }
+.skill-label {
+  display: flex; justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+.skill-pct { color: var(--cyan); }
+.skill-track {
+  height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow:hidden;
+}
+.skill-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  border-radius: 2px;
+  width: 0%;
+  transition: width 1.2s ease;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* ═══════════ TEAM ═══════════ */
+#team {
+  background: linear-gradient(180deg, transparent, rgba(0,255,240,0.02), transparent);
+}
+
+.team-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.member-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px 24px;
+  text-align: center;
+  cursor: none;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  position: relative;
+  overflow: hidden;
+  opacity: 0; transform: translateY(30px);
+}
+.member-card.visible { opacity:1; transform: translateY(0); transition: opacity 0.5s, transform 0.5s, border-color 0.3s, box-shadow 0.3s; }
+.member-card::before {
+  content: '';
+  position: absolute; top:0; left:0; right:0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  transform: scaleX(0);
+  transition: transform 0.4s;
+}
+.member-card:hover { border-color: var(--cyan); box-shadow: var(--glow-c); transform: translateY(-6px); }
+.member-card:hover::before { transform: scaleX(1); }
+
+.member-avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  position: relative;
+}
+.member-avatar::after {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--cyan);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.member-card:hover .member-avatar::after { opacity: 1; box-shadow: var(--glow-c); }
+
+.av-cyan { background: radial-gradient(circle, rgba(0,255,240,0.2), rgba(0,255,240,0.05)); }
+.av-purple { background: radial-gradient(circle, rgba(180,0,255,0.2), rgba(180,0,255,0.05)); }
+.av-pink { background: radial-gradient(circle, rgba(255,0,110,0.2), rgba(255,0,110,0.05)); }
+.av-gold { background: radial-gradient(circle, rgba(255,200,0,0.2), rgba(255,200,0,0.05)); }
+
+.member-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.member-role {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--cyan);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.member-bio {
+  font-size: 0.9rem;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.member-tags {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+}
+.tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  padding: 3px 10px;
+  border: 1px solid rgba(0,255,240,0.2);
+  border-radius: 2px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════ PROJECTS ═══════════ */
+#projects {
+  background: linear-gradient(180deg, transparent, rgba(180,0,255,0.03), transparent);
+}
+
+.projects-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.project-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  cursor: none;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  opacity: 0; transform: translateY(20px);
+}
+.project-card.visible { opacity:1; transform: translateY(0); }
+.project-card:hover { border-color: var(--purple); box-shadow: var(--glow-p); transform: translateY(-4px); }
+
+.project-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+  display: inline-block;
+  letter-spacing: 0.15em;
+}
+.status-active { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; }
+.status-complete { background: rgba(0,255,240,0.1); border: 1px solid var(--border); color: var(--cyan); }
+.status-building { background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.3); color: #ffcc00; }
+
+.project-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.project-desc {
+  font-size: 0.95rem;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.project-stack {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.stack-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  background: rgba(180,0,255,0.1);
+  border: 1px solid rgba(180,0,255,0.2);
+  color: var(--purple);
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+}
+
+.project-link {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--cyan);
+  text-decoration: none;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+  transition: color 0.2s;
+}
+.project-link:hover { color: var(--purple); }
+.project-link::after { content: '→'; transition: transform 0.2s; }
+.project-link:hover::after { transform: translateX(4px); }
+
+/* ═══════════ BLOG ═══════════ */
+#blog {
+  background: linear-gradient(180deg, transparent, rgba(0,255,240,0.02), transparent);
+}
+
+.blog-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.blog-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  cursor: none;
+  transition: all 0.3s;
+  opacity: 0; transform: translateY(20px);
+}
+.blog-card.visible { opacity:1; transform: translateY(0); }
+.blog-card:hover { border-color: var(--cyan); box-shadow: var(--glow-c); transform: translateY(-3px); }
+.blog-card.featured { grid-column: 1; }
+
+.blog-meta {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+.blog-date {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+.blog-cat {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  padding: 2px 10px;
+  background: rgba(0,255,240,0.08);
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+}
+.blog-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.blog-excerpt {
+  font-size: 0.9rem;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.blog-read {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--purple);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.blog-side {
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.live-feed {
+  background: var(--glass2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 20px;
+}
+.live-feed-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  background: #00ff88;
+  border-radius: 50%;
+  animation: pulse-green 1.5s infinite;
+  box-shadow: 0 0 8px #00ff88;
+}
+.live-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: #00ff88;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.feed-item {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,255,240,0.06);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-icon { font-size: 0.9rem; }
+.feed-text {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.feed-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+  display: block;
+  margin-top: 2px;
+}
+
+/* ═══════════ TERMINAL ═══════════ */
+#terminal-section {
+  padding: 60px 40px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, transparent, rgba(180,0,255,0.04), transparent);
+}
+
+.terminal-window {
+  max-width: 700px;
+  width: 100%;
+  background: rgba(2,4,8,0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,255,240,0.08);
+}
+.terminal-bar {
+  background: rgba(255,255,255,0.04);
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.t-dot { width: 10px; height: 10px; border-radius: 50%; }
+.t-red { background: #ff5f57; }
+.t-yellow { background: #ffbd2e; }
+.t-green { background: #28c940; }
+.terminal-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--dim);
+  margin-left: auto; margin-right: auto;
+}
+.terminal-body {
+  padding: 24px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.8;
+  min-height: 200px;
+  overflow-y: auto;
+}
+.t-prompt { color: var(--cyan); }
+.t-cmd { color: #fff; }
+.t-out { color: var(--dim); }
+.t-ok { color: #00ff88; }
+.t-err { color: var(--pink); }
+.t-hl { color: var(--purple); }
+.t-cursor-line { display: flex; align-items: center; gap: 6px; }
+.t-cursor { width: 8px; height: 16px; background: var(--cyan); animation: blink 0.8s infinite; display: inline-block; }
+.terminal-input-row {
+  display: flex; gap: 12px;
+  padding: 0 24px 20px;
+}
+.terminal-input {
+  flex:1;
+  background: rgba(0,255,240,0.05);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 10px 14px;
+  color: var(--cyan);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: none;
+}
+.terminal-input::placeholder { color: var(--dim); }
+.terminal-input:focus { border-color: var(--cyan); box-shadow: var(--glow-c); }
+.terminal-run {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border: none;
+  padding: 10px 20px;
+  color: var(--bg);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 2px;
+  cursor: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.terminal-run:hover { transform: scale(1.03); box-shadow: var(--glow-c); }
+
+/* ═══════════ CONTACT ═══════════ */
+#contact {
+  background: linear-gradient(180deg, transparent, rgba(0,255,240,0.02), transparent);
+}
+
+.contact-grid {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+.contact-info h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.contact-info p {
+  font-size: 0.95rem;
+  color: var(--dim);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.social-links {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.social-link {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+  cursor: none;
+}
+.social-link:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: var(--glow-c); transform: translateX(6px); }
+.social-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+.contact-form {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.form-field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.form-field label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.form-field input, .form-field textarea, .form-field select {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: none;
+}
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+  border-color: var(--cyan);
+  box-shadow: var(--glow-c);
+}
+.form-field textarea { resize: vertical; min-height: 100px; }
+.form-field select { background: var(--bg2); }
+.form-field select option { background: var(--bg2); color: var(--text); }
+
+/* ═══════════ FOOTER ═══════════ */
+footer {
+  position: relative; z-index:1;
+  border-top: 1px solid rgba(0,255,240,0.08);
+  padding: 32px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(2,4,8,0.8);
+}
+.footer-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  letter-spacing: 0.2em;
+}
+.footer-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+}
+
+/* ═══════════ GLITCH ═══════════ */
+.glitch {
+  position: relative;
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute; top:0; left:0; right:0;
+  font-family: inherit; font-size: inherit; font-weight: inherit;
+}
+.glitch::before {
+  color: var(--cyan);
+  animation: glitch1 3s infinite;
+  clip-path: polygon(0 20%, 100% 20%, 100% 45%, 0 45%);
+  left: 2px;
+}
+.glitch::after {
+  color: var(--purple);
+  animation: glitch2 3s infinite;
+  clip-path: polygon(0 55%, 100% 55%, 100% 80%, 0 80%);
+  left: -2px;
+}
+@keyframes glitch1 {
+  0%,90%,100% { transform: translateX(0); opacity:0; }
+  92% { transform: translateX(-3px); opacity:0.8; }
+  94% { transform: translateX(3px); opacity:0.8; }
+  96% { transform: translateX(0); opacity:0; }
+}
+@keyframes glitch2 {
+  0%,90%,100% { transform: translateX(0); opacity:0; }
+  91% { transform: translateX(3px); opacity:0.8; }
+  93% { transform: translateX(-3px); opacity:0.8; }
+  95% { transform: translateX(0); opacity:0; }
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 768px) {
+  nav { padding: 14px 20px; }
+  .nav-links { display: none; }
+  section { padding: 80px 20px 50px; }
+  .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  .blog-grid { grid-template-columns: 1fr; }
+  .blog-card.featured { grid-column: 1; }
+  .contact-grid { grid-template-columns: 1fr; gap: 30px; }
+  footer { flex-direction: column; gap: 12px; text-align: center; }
+  .home-stats { gap: 24px; }
+  .skills-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- BG Canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo glitch" data-text="RAUTIXX">RAUTIXX</div>
+  <div class="loader-terminal" id="loader-terminal"></div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#home" class="nav-logo">RAUTIXX</a>
+  <ul class="nav-links">
+    <li><a href="#home">// HOME</a></li>
+    <li><a href="#about">// ABOUT</a></li>
+    <li><a href="#team">// TEAM</a></li>
+    <li><a href="#projects">// PROJECTS</a></li>
+    <li><a href="#blog">// BLOG</a></li>
+    <li><a href="#contact">// CONTACT</a></li>
+  </ul>
+  <div class="nav-status"><div class="status-dot"></div>SYSTEMS ONLINE</div>
+  <div class="nav-clock" id="nav-clock">
+    <span class="clock-label">⧗</span> <span id="clock-text">00:00:00</span>
+  </div>
+</nav>
+
+<!-- ██ HOME ██ -->
+<section id="home">
+  <div class="home-badge">// DIGITAL INTELLIGENCE LAB //</div>
+  <h1 class="home-title glitch" data-text="RAUTIXX">
+    <span class="c">RAU</span><span class="p">TIXX</span>
+  </h1>
+  <p class="home-tagline">BUILD. BREAK. INNOVATE. REPEAT.</p>
+  <div class="typewriter-line" id="typewriter"><span class="cursor">▌</span></div>
+  <div class="home-ctas">
+    <a href="#projects" class="btn-primary">VIEW PROJECTS</a>
+    <a href="#contact" class="btn-ghost">JOIN THE LAB</a>
+  </div>
+  <div class="home-stats">
+    <div class="stat"><span class="stat-num">12+</span><span class="stat-label">// PROJECTS</span></div>
+    <div class="stat"><span class="stat-num">5</span><span class="stat-label">// MEMBERS</span></div>
+    <div class="stat"><span class="stat-num">3</span><span class="stat-label">// HACKATHONS</span></div>
+    <div class="stat"><span class="stat-num">∞</span><span class="stat-label">// AMBITION</span></div>
+  </div>
+  <div class="scroll-hint">SCROLL<div class="scroll-arrow"></div></div>
+</section>
+
+<!-- ██ ABOUT ██ -->
+<section id="about">
+  <div class="section-header">
+    <span class="section-tag">// ABOUT US</span>
+    <h2 class="section-title">OUR <span>MISSION</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="about-grid">
+    <div>
+      <div class="about-mission">
+        <h3>⚡ WHO WE ARE</h3>
+        <p>Rautixx is a collective of passionate developers, designers, and dreamers. We don't just write code — we craft digital experiences that push the boundaries of what's possible. From AI integrations to full-stack applications, we build tools that matter.</p>
+      </div>
+      <div class="skills-grid" style="margin-top:24px;">
+        <div class="skill-bar"><div class="skill-label"><span>FRONTEND</span><span class="skill-pct">92%</span></div><div class="skill-track"><div class="skill-fill" data-w="92"></div></div></div>
+        <div class="skill-bar"><div class="skill-label"><span>BACKEND</span><span class="skill-pct">85%</span></div><div class="skill-track"><div class="skill-fill" data-w="85"></div></div></div>
+        <div class="skill-bar"><div class="skill-label"><span>AI / ML</span><span class="skill-pct">78%</span></div><div class="skill-track"><div class="skill-fill" data-w="78"></div></div></div>
+        <div class="skill-bar"><div class="skill-label"><span>DEVOPS</span><span class="skill-pct">70%</span></div><div class="skill-track"><div class="skill-fill" data-w="70"></div></div></div>
+        <div class="skill-bar"><div class="skill-label"><span>UI/UX</span><span class="skill-pct">88%</span></div><div class="skill-track"><div class="skill-fill" data-w="88"></div></div></div>
+        <div class="skill-bar"><div class="skill-label"><span>MOBILE</span><span class="skill-pct">65%</span></div><div class="skill-track"><div class="skill-fill" data-w="65"></div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2022</div><div class="timeline-text"><h4>THE SPARK</h4><p>Team formed in a college lab at midnight. One idea, five people, zero sleep.</p></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text"><h4>FIRST HACKATHON</h4><p>Competed in regional hackathon. Built a smart attendance system in 36 hours.</p></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2023</div><div class="timeline-text"><h4>FIRST PRODUCT</h4><p>Launched our first real product — a collaborative code review platform.</p></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2024</div><div class="timeline-text"><h4>AI PIVOT</h4><p>Shifted focus to AI-powered tools. Integrated LLMs into 3 major projects.</p></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-year">2025</div><div class="timeline-text"><h4>RAUTIXX V2</h4><p>Rebuilt the team identity. New projects, new goals, same fire.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██ TEAM ██ -->
+<section id="team">
+  <div class="section-header">
+    <span class="section-tag">// TEAM</span>
+    <h2 class="section-title">MEET THE <span>BUILDERS</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="team-grid">
+    <div class="member-card">
+      <div class="member-avatar av-cyan">⚡</div>
+      <div class="member-name">RAHUL SINGH</div>
+      <div class="member-role">// LEAD DEVELOPER</div>
+      <div class="member-bio">Full-stack architect. Obsessed with clean code and caffeine. Turns ideas into shipping products.</div>
+      <div class="member-tags"><span class="tag">React</span><span class="tag">Node.js</span><span class="tag">Python</span></div>
+    </div>
+    <div class="member-card">
+      <div class="member-avatar av-purple">🧠</div>
+      <div class="member-name">ARUN KUMAR</div>
+      <div class="member-role">// AI ENGINEER</div>
+      <div class="member-bio">ML specialist who makes machines think. Passionate about NLP and computer vision.</div>
+      <div class="member-tags"><span class="tag">TensorFlow</span><span class="tag">PyTorch</span><span class="tag">LLMs</span></div>
+    </div>
+    <div class="member-card">
+      <div class="member-avatar av-pink">🎨</div>
+      <div class="member-name">GOLU YADAV</div>
+      <div class="member-role">// UI/UX DESIGNER</div>
+      <div class="member-bio">Pixel perfectionist. Creates interfaces that feel intuitive and look spectacular.</div>
+      <div class="member-tags"><span class="tag">Figma</span><span class="tag">CSS</span><span class="tag">Motion</span></div>
+    </div>
+    <div class="member-card">
+      <div class="member-avatar av-gold">🔧</div>
+      <div class="member-name">SUBHAM CHANDRA5</div>
+      <div class="member-role">// BACKEND ENGINEER</div>
+      <div class="member-bio">Database whisperer. Builds APIs that don't break at 3AM during presentations.</div>
+      <div class="member-tags"><span class="tag">Go</span><span class="tag">PostgreSQL</span><span class="tag">Docker</span></div>
+    </div>
+    <div class="member-card">
+      <div class="member-avatar av-cyan">📱</div>
+      <div class="member-name">KUNAL VERMA</div>
+      <div class="member-role">// MOBILE DEVELOPER</div>
+      <div class="member-bio">Cross-platform specialist. If it runs on a phone, Kunal built it or broke it trying.</div>
+      <div class="member-tags"><span class="tag">Flutter</span><span class="tag">React Native</span><span class="tag">Firebase</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ██ PROJECTS ██ -->
+<section id="projects">
+  <div class="section-header">
+    <span class="section-tag">// PROJECTS</span>
+    <h2 class="section-title">WHAT WE <span>BUILD</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="projects-grid">
+    <div class="project-card">
+      <span class="project-status status-active">● ACTIVE</span>
+      <div class="project-name">NEURAL DESK</div>
+      <div class="project-desc">AI-powered productivity dashboard. Integrates LLMs to summarize tasks, auto-schedule, and predict bottlenecks before they happen.</div>
+      <div class="project-stack"><span class="stack-tag">React</span><span class="stack-tag">FastAPI</span><span class="stack-tag">OpenAI</span><span class="stack-tag">Redis</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+    <div class="project-card">
+      <span class="project-status status-building">◈ BUILDING</span>
+      <div class="project-name">CODE LENS</div>
+      <div class="project-desc">Collaborative code review platform with AI suggestions and real-time annotation. Built for student dev teams.</div>
+      <div class="project-stack"><span class="stack-tag">Next.js</span><span class="stack-tag">Socket.io</span><span class="stack-tag">Monaco</span><span class="stack-tag">PostgreSQL</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+    <div class="project-card">
+      <span class="project-status status-complete">✓ COMPLETE</span>
+      <div class="project-name">SMART ATTEND</div>
+      <div class="project-desc">Face-recognition attendance system deployed in college. 500+ daily active users. Winner of regional hackathon 2023.</div>
+      <div class="project-stack"><span class="stack-tag">Python</span><span class="stack-tag">OpenCV</span><span class="stack-tag">Flask</span><span class="stack-tag">MySQL</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+    <div class="project-card">
+      <span class="project-status status-active">● ACTIVE</span>
+      <div class="project-name">RAUTIXX BOT</div>
+      <div class="project-desc">Team AI assistant integrated with Discord and Slack. Answers code questions, tracks project status, and roasts bad commits.</div>
+      <div class="project-stack"><span class="stack-tag">Node.js</span><span class="stack-tag">Claude API</span><span class="stack-tag">Discord.js</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+    <div class="project-card">
+      <span class="project-status status-building">◈ BUILDING</span>
+      <div class="project-name">PIXELFORGE</div>
+      <div class="project-desc">Browser-based design tool for developers who hate Figma's pricing. Minimal, fast, free.</div>
+      <div class="project-stack"><span class="stack-tag">Canvas API</span><span class="stack-tag">React</span><span class="stack-tag">Konva</span><span class="stack-tag">Supabase</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+    <div class="project-card">
+      <span class="project-status status-complete">✓ COMPLETE</span>
+      <div class="project-name">GIT RADAR</div>
+      <div class="project-desc">GitHub analytics dashboard that visualizes team contribution patterns, merge conflicts, and review cycles in real time.</div>
+      <div class="project-stack"><span class="stack-tag">Vue.js</span><span class="stack-tag">GitHub API</span><span class="stack-tag">D3.js</span></div>
+      <a href="#" class="project-link">VIEW PROJECT</a>
+    </div>
+  </div>
+</section>
+
+<!-- ██ BLOG ██ -->
+<section id="blog">
+  <div class="section-header">
+    <span class="section-tag">// LIVE UPDATES</span>
+    <h2 class="section-title">TEAM <span>JOURNAL</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="blog-grid">
+    <div>
+      <div class="blog-card featured">
+        <div class="blog-meta"><span class="blog-date">MAR 28, 2026</span><span class="blog-cat">AI</span></div>
+        <div class="blog-title">How we integrated Claude API into Neural Desk in 72 hours</div>
+        <div class="blog-excerpt">We got access to Claude's API on a Friday evening. By Monday morning, Neural Desk could summarize your entire week of tasks, identify blockers, and suggest a reordered priority list. Here's exactly how we did it...</div>
+        <span class="blog-read">READ MORE →</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+        <div class="blog-card">
+          <div class="blog-meta"><span class="blog-date">MAR 15</span><span class="blog-cat">HACKATHON</span></div>
+          <div class="blog-title">Hackathon Prep: Our 5-step system</div>
+          <div class="blog-excerpt">We've competed in 3 hackathons. Here's our repeatable playbook for shipping something impressive in 36 hours...</div>
+          <span class="blog-read">READ MORE →</span>
+        </div>
+        <div class="blog-card">
+          <div class="blog-meta"><span class="blog-date">MAR 02</span><span class="blog-cat">DEVLOG</span></div>
+          <div class="blog-title">Code Lens: From idea to working prototype</div>
+          <div class="blog-excerpt">Real-time collaborative code review is a solved problem. We decided to solve it differently, for students...</div>
+          <span class="blog-read">READ MORE →</span>
+        </div>
+      </div>
+    </div>
+    <div class="blog-side">
+      <div class="live-feed">
+        <div class="live-feed-header"><div class="live-dot"></div><span class="live-title">LIVE FEED</span></div>
+        <div class="feed-item"><span class="feed-icon">🤖</span><div><div class="feed-text">Neural Desk v0.4 deployed to staging</div><span class="feed-time">2 HOURS AGO</span></div></div>
+        <div class="feed-item"><span class="feed-icon">🔥</span><div><div class="feed-text">Hackathon registration confirmed — Smart India Hackathon</div><span class="feed-time">1 DAY AGO</span></div></div>
+        <div class="feed-item"><span class="feed-icon">🚀</span><div><div class="feed-text">Code Lens hit 50 beta testers</div><span class="feed-time">3 DAYS AGO</span></div></div>
+        <div class="feed-item"><span class="feed-icon">📖</span><div><div class="feed-text">New blog post published on AI integration</div><span class="feed-time">1 WEEK AGO</span></div></div>
+        <div class="feed-item"><span class="feed-icon">⚡</span><div><div class="feed-text">Rautixx Bot v2 now live on Discord</div><span class="feed-time">2 WEEKS AGO</span></div></div>
+      </div>
+      <div class="blog-card">
+        <div class="blog-meta"><span class="blog-date">FEB 20</span><span class="blog-cat">TEAM</span></div>
+        <div class="blog-title">Why we ditched stand-ups for async updates</div>
+        <div class="blog-excerpt">We stopped having daily meetings. Productivity went up 40%. Here's our new async-first workflow...</div>
+        <span class="blog-read">READ MORE →</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██ TERMINAL ██ -->
+<section id="terminal-section">
+  <div class="section-header">
+    <span class="section-tag">// INTERACTIVE</span>
+    <h2 class="section-title">TEAM <span>TERMINAL</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="terminal-window">
+    <div class="terminal-bar">
+      <div class="t-dot t-red"></div>
+      <div class="t-dot t-yellow"></div>
+      <div class="t-dot t-green"></div>
+      <span class="terminal-title">rautixx-shell v2.0.0</span>
+    </div>
+    <div class="terminal-body" id="terminal-output">
+      <div><span class="t-prompt">rautixx@lab:~$</span> <span class="t-cmd">./init_session.sh</span></div>
+      <div class="t-ok">✓ Session initialized. Welcome to RAUTIXX Lab.</div>
+      <div class="t-out">Type a command below. Try: <span class="t-hl">help</span>, <span class="t-hl">projects</span>, <span class="t-hl">team</span>, <span class="t-hl">status</span>, <span class="t-hl">whoami</span></div>
+      <br>
+      <div class="t-cursor-line"><span class="t-prompt">rautixx@lab:~$</span>&nbsp;<div class="t-cursor"></div></div>
+    </div>
+    <div class="terminal-input-row">
+      <input type="text" class="terminal-input" id="terminal-input" placeholder="enter command..." autocomplete="off" spellcheck="false">
+      <button class="terminal-run" onclick="runTerminalCmd()">RUN</button>
+    </div>
+  </div>
+</section>
+
+<!-- ██ CONTACT ██ -->
+<section id="contact">
+  <div class="section-header">
+    <span class="section-tag">// CONTACT</span>
+    <h2 class="section-title">GET IN <span>TOUCH</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-info">
+      <h3>Let's build something together.</h3>
+      <p>Whether you have a project idea, want to collaborate, or just want to join the team — we're always open to new connections. Reach out through any channel below.</p>
+      <div class="social-links">
+        <a href="#" class="social-link"><span class="social-icon"></span>github.com/rautixx</a>
+        <a href="#" class="social-link"><span class="social-icon"></span>@rautixx_dev</a>
+        <a href="#" class="social-link"><span class="social-icon"></span>linkedin.com/company/rautixx</a>
+        <a href="mailto:hello@rautixx.dev" class="social-link"><span class="social-icon"></span>hello@rautixx.dev</a>
+        <a href="#" class="social-link"><span class="social-icon"></span>Discord Community</a>
+      </div>
+    </div>
+    <div>
+      <div class="contact-form">
+        <div class="form-field">
+          <label>// YOUR NAME</label>
+          <input type="text" placeholder="John Developer">
+        </div>
+        <div class="form-field">
+          <label>// EMAIL</label>
+          <input type="email" placeholder="you@domain.com">
+        </div>
+        <div class="form-field">
+          <label>// REASON</label>
+          <select>
+            <option>Collaboration Request</option>
+            <option>Join Rautixx</option>
+            <option>Project Inquiry</option>
+            <option>Just Saying Hi</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>// MESSAGE</label>
+          <textarea placeholder="Tell us about your idea..."></textarea>
+        </div>
+        <button class="btn-primary" style="align-self:flex-start; border:none; cursor:none;">TRANSMIT MESSAGE →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">RAUTIXX</div>
+  <div class="footer-text">© 2026 RAUTIXX DIGITAL LAB — BUILT WITH AND CAFFEINE</div>
+  <div class="footer-text">JAMSHEDPUR, IN</div>
+</footer>
+
+<script>
+/* ═══════════ CURSOR ═══════════ */
+const dot = document.getElementById('cursor-dot');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+function animCursor() {
+  dot.style.left = mx+'px'; dot.style.top = my+'px';
+  rx += (mx-rx)*0.12; ry += (my-ry)*0.12;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+
+/* ═══════════ CANVAS PARTICLES ═══════════ */
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,particles=[];
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random()*W;
+    this.y = Math.random()*H;
+    this.vx = (Math.random()-0.5)*0.3;
+    this.vy = (Math.random()-0.5)*0.3;
+    this.r = Math.random()*1.5+0.3;
+    this.a = Math.random()*0.5+0.1;
+    this.c = Math.random() > 0.5 ? '0,255,240' : '180,0,255';
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle = `rgba(${this.c},${this.a})`;
+    ctx.fill();
+  }
+}
+
+for(let i=0;i<120;i++) particles.push(new Particle());
+
+function drawGrid() {
+  const gs = 80;
+  ctx.strokeStyle = 'rgba(0,255,240,0.025)';
+  ctx.lineWidth = 0.5;
+  for(let x=0;x<W;x+=gs) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for(let y=0;y<H;y+=gs) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+}
+
+function connectParticles() {
+  for(let i=0;i<particles.length;i++) {
+    for(let j=i+1;j<particles.length;j++) {
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<100) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle = `rgba(0,255,240,${0.08*(1-dist/100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// Mouse glow effect
+let mouseX=0, mouseY=0;
+document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; });
+
+function drawMouseGlow() {
+  const grd = ctx.createRadialGradient(mouseX,mouseY,0,mouseX,mouseY,200);
+  grd.addColorStop(0,'rgba(0,255,240,0.04)');
+  grd.addColorStop(1,'rgba(0,255,240,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0,0,W,H);
+}
+
+function animCanvas() {
+  ctx.clearRect(0,0,W,H);
+  drawGrid();
+  connectParticles();
+  particles.forEach(p=>{ p.update(); p.draw(); });
+  drawMouseGlow();
+  requestAnimationFrame(animCanvas);
+}
+animCanvas();
+
+/* ═══════════ LOADER ═══════════ */
+const loaderLines = [
+  { text:'> Initializing RAUTIXX core systems...', cls:'', delay:200 },
+  { text:'> Loading neural modules...', cls:'', delay:500 },
+  { text:'[OK] Frontend engine ready', cls:'ok', delay:900 },
+  { text:'[OK] Backend API connected', cls:'ok', delay:1200 },
+  { text:'[OK] AI modules online', cls:'ok', delay:1500 },
+  { text:'[WARN] Coffee levels critical', cls:'warn', delay:1800 },
+  { text:'[OK] Systems nominal', cls:'ok', delay:2100 },
+  { text:'> ACCESS GRANTED ✓ Welcome, Developer', cls:'title', delay:2400 },
+];
+
+const term = document.getElementById('loader-terminal');
+loaderLines.forEach(({text,cls,delay},i) => {
+  setTimeout(() => {
+    const span = document.createElement('span');
+    span.className = 'loader-line' + (cls ? ' '+cls : '');
+    span.textContent = text;
+    span.style.animationDelay = '0s';
+    term.appendChild(span);
+  }, delay);
+});
+
+setTimeout(() => {
+  document.getElementById('loader').style.transition = 'opacity 0.6s';
+  document.getElementById('loader').style.opacity = '0';
+  setTimeout(() => document.getElementById('loader').style.display='none', 700);
+}, 3200);
+
+/* ═══════════ TYPEWRITER ═══════════ */
+const tw = document.getElementById('typewriter');
+const phrases = [
+  'Initializing Rautixx...',
+  'Access Granted ',
+  'Welcome, Developer ',
+  'Building the future...',
+  'AI × Code × Design',
+  'Join the lab. Build together.',
+];
+let pi=0, ci=0, deleting=false;
+function typeStep() {
+  const phrase = phrases[pi];
+  if(!deleting) {
+    ci++;
+    tw.innerHTML = phrase.slice(0,ci) + '<span class="cursor">▌</span>';
+    if(ci===phrase.length) { deleting=true; setTimeout(typeStep, 1800); return; }
+    setTimeout(typeStep, 60);
+  } else {
+    ci--;
+    tw.innerHTML = phrase.slice(0,ci) + '<span class="cursor">▌</span>';
+    if(ci===0) { deleting=false; pi=(pi+1)%phrases.length; setTimeout(typeStep, 300); return; }
+    setTimeout(typeStep, 35);
+  }
+}
+setTimeout(typeStep, 3800);
+
+/* ═══════════ SCROLL ANIMATIONS ═══════════ */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.classList.add('visible');
+      // Animate skill bars
+      const fills = e.target.querySelectorAll('.skill-fill');
+      fills.forEach(f => { f.style.width = f.dataset.w + '%'; });
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.timeline-item, .member-card, .project-card, .blog-card').forEach(el => observer.observe(el));
+document.querySelectorAll('.skill-bar').forEach(el => observer.observe(el));
+
+// Stagger delays for grid items
+document.querySelectorAll('.member-card').forEach((el,i) => el.style.transitionDelay = (i*0.08)+'s');
+document.querySelectorAll('.project-card').forEach((el,i) => el.style.transitionDelay = (i*0.07)+'s');
+
+/* ═══════════ TERMINAL COMMANDS ═══════════ */
+const cmds = {
+  help: () => `Available commands:\n  <span class="t-hl">projects</span>  — list all projects\n  <span class="t-hl">team</span>      — show team members\n  <span class="t-hl">status</span>    — system status check\n  <span class="t-hl">whoami</span>    — about rautixx\n  <span class="t-hl">clear</span>     — clear terminal\n  <span class="t-hl">ping</span>      — ping the lab\n  <span class="t-hl">hack</span>      — initiate hacking sequence`,
+  projects: () => `<span class="t-ok">ACTIVE PROJECTS:</span>\n  [●] Neural Desk    — AI productivity dashboard\n  [●] Rautixx Bot    — Team AI assistant\n  [◈] Code Lens      — Collaborative code review\n  [◈] PixelForge     — Browser design tool\n  [✓] Smart Attend   — Face recognition system\n  [✓] Git Radar      — GitHub analytics`,
+  team: () => `<span class="t-ok">TEAM MEMBERS:</span>\n  ⚡ RAHUL SINGH  — Lead Developer\n  🧠 Priya Sharma — AI Engineer\n  🎨 Rahul Mehta  — UI/UX Designer\n  🔧 Ankita Singh  — Backend Engineer\n  📱 Kunal Verma  — Mobile Developer`,
+  status: () => `<span class="t-ok">SYSTEM STATUS:</span>\n  [✓] Frontend Engine    ONLINE\n  [✓] Backend API        ONLINE\n  [✓] AI Modules         ONLINE\n  [✓] Database           ONLINE\n  [✓] Coffee Machine     CRITICAL\n  [✓] Team Motivation    MAXIMUM`,
+  whoami: () => `<span class="t-hl">RAUTIXX Digital Intelligence Lab</span>\nA collective of developers building the future.\nLocation: Jamshedpur, India\nStatus: Always shipping\nMission: Build. Break. Innovate. Repeat.`,
+  ping: () => `PING rautixx.lab\n  64 bytes from lab: time=0.001ms\n  64 bytes from lab: time=0.002ms\n  64 bytes from lab: time=0.001ms\n<span class="t-ok">Response: HELLO DEVELOPER 👋</span>`,
+  hack: () => `<span class="t-ok">Initiating hacking sequence...</span>\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 100%\n<span class="t-ok">✓ Access to the universe granted</span>\n<span class="t-hl">Just kidding. But seriously, check our GitHub.</span>`,
+  clear: () => '__CLEAR__',
+};
+
+function addTermLine(html) {
+  const out = document.getElementById('terminal-output');
+  const last = out.querySelector('.t-cursor-line');
+  if(last) last.remove();
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  out.appendChild(div);
+  out.innerHTML += '<br><div class="t-cursor-line"><span class="t-prompt">rautixx@lab:~$</span>&nbsp;<div class="t-cursor"></div></div>';
+  out.scrollTop = out.scrollHeight;
+}
+
+function runTerminalCmd() {
+  const inp = document.getElementById('terminal-input');
+  const cmd = inp.value.trim().toLowerCase();
+  inp.value = '';
+  if(!cmd) return;
+  const out = document.getElementById('terminal-output');
+  const last = out.querySelector('.t-cursor-line');
+  if(last) {
+    last.innerHTML = `<span class="t-prompt">rautixx@lab:~$</span>&nbsp;<span class="t-cmd">${cmd}</span>`;
+    last.className = '';
+  }
+  const fn = cmds[cmd];
+  if(cmd==='clear') {
+    out.innerHTML = '<div class="t-ok">Terminal cleared.</div><br><div class="t-cursor-line"><span class="t-prompt">rautixx@lab:~$</span>&nbsp;<div class="t-cursor"></div></div>';
+  } else if(fn) {
+    const result = fn();
+    addTermLine(result);
+  } else {
+    addTermLine(`<span class="t-err">Command not found: ${cmd}</span>\nType <span class="t-hl">help</span> for available commands.`);
+  }
+}
+
+document.getElementById('terminal-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') runTerminalCmd();
+});
+
+/* ═══════════ NAV CLOCK ═══════════ */
+const clockText = document.getElementById('clock-text');
+const navClock = document.getElementById('nav-clock');
+function formatTwo(n) { return n.toString().padStart(2,'0'); }
+function tickClock() {
+  const now = new Date();
+  const h = formatTwo(now.getHours());
+  const m = formatTwo(now.getMinutes());
+  const s = formatTwo(now.getSeconds());
+  clockText.textContent = `${h}:${m}:${s}`;
+  if(Math.random() < 0.06) {
+    clockText.style.opacity = '0.78';
+    setTimeout(() => clockText.style.opacity = '1', 120);
+  }
+}
+
+tickClock();
+setInterval(tickClock, 1000);
+setInterval(() => {
+  navClock.classList.add('pulse');
+  setTimeout(() => navClock.classList.remove('pulse'), 340);
+}, 5200);
+
+</script>
+</body>
+</html>
